@@ -1,0 +1,19 @@
+mainmenu "DTM Test application"
+
+config DTM_CHANNEL
+	int "DTM TX/RX channel index"
+	range 0 39
+	default 22
+	help
+	  BLE RF channel index used for the DTM test.
+	  Frequency = 2402 + 2 * channel MHz.
+	  Channel 22 = 2446 MHz (near BLE channel 18).
+
+config DTM_DATA_LENGTH
+	int "DTM test payload length (bytes)"
+	range 0 255
+	default 37
+	help
+	  Number of payload bytes in each DTM test packet.
+
+source "Kconfig.zephyr"
