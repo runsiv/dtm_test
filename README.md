@@ -125,4 +125,5 @@ CONFIG_DTM_CTE_LENGTH=0
 CONFIG_DTM_CTE_TYPE=0
 ```
 
-> **Note:** `prj.conf` does not support inline comments (e.g. `CONFIG_DTM_PHY=1 # comment` is invalid). Place comments on a separate line above the assignment.
+### Possible issues
+Not every combination of physical layer nor pattern is tested. The sample should be viewed as non "as is" sample and may contain bugs
