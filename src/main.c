@@ -17,6 +17,10 @@ LOG_MODULE_REGISTER(dtm_test, LOG_LEVEL_DBG);
 
 #define DTM_CHANNEL     CONFIG_DTM_CHANNEL
 #define DTM_DATA_LENGTH CONFIG_DTM_DATA_LENGTH
+#define DTM_PHY         CONFIG_DTM_PHY
+#define DTM_PAYLOAD     CONFIG_DTM_PAYLOAD
+#define DTM_CTE_LENGTH  CONFIG_DTM_CTE_LENGTH
+#define DTM_CTE_TYPE    CONFIG_DTM_CTE_TYPE
 
 /* Button 1 (sw0): start DTM TX test */
 #define BUTTON_NODE DT_ALIAS(sw0)
@@ -87,6 +91,28 @@ static nrf_radio_txpower_t dbm_to_nrf_radio_txpower(int8_t dbm)
  *  @param payload   BT_HCI_TEST_PKT_PAYLOAD_PRBS9, etc.
  *  @param data_len  Test payload length in bytes (0-255, typically 37)
  *  @param tx_power  TX power in dBm, or 0x7F for controller default
+ * 
+ * Valid payloads
+ * BT_HCI_TEST_PKT_PAYLOAD_PRBS9 — pseudo-random 9-bit sequence
+ * BT_HCI_TEST_PKT_PAYLOAD_11110000 — alternating nibbles (used here)
+ * BT_HCI_TEST_PKT_PAYLOAD_10101010 — alternating bits
+ * BT_HCI_TEST_PKT_PAYLOAD_PRBS15 — pseudo-random 15-bit
+ * BT_HCI_TEST_PKT_PAYLOAD_11111111 — all ones
+ * BT_HCI_TEST_PKT_PAYLOAD_00000000 — all zeros
+ * BT_HCI_TEST_PKT_PAYLOAD_00001111 — inverse nibbles
+ * BT_HCI_TEST_PKT_PAYLOAD_01010101 — inverse alternating bits
+ * 
+ * phy — uint8_t
+ * Physical layer selection:
+ * BT_HCI_LE_TX_PHY_1M — 1 Mbps
+ * BT_HCI_LE_TX_PHY_2M — 2 Mbps
+ * BT_HCI_LE_TX_PHY_CODED_S8 — Coded PHY, 125 kbps (S=8)
+ * BT_HCI_LE_TX_PHY_CODED_S2 — Coded PHY, 500 kbps (S=2)
+ * 
+ * cte_length — uint8_t
+ * Constant Tone Extension length. 0 = no CTE (as used here). Range 2–20 if CTE is used.
+ * cte_type — uint8_t
+ * CTE type. 0 = AoA, 1 = AoD 1 µs, 2 = AoD 2 µs. Irrelevant when cte_length = 0.
  */
 static int dtm_tx_start(uint8_t channel, uint8_t phy, uint8_t payload,
 			uint8_t data_len, int8_t tx_power)
@@ -112,9 +138,9 @@ static int dtm_tx_start(uint8_t channel, uint8_t phy, uint8_t payload,
 	cp.test_data_length        = data_len;
 	cp.packet_payload          = payload;
 	cp.phy                     = phy;
-	cp.cte_length              = 0x00; /* No CTE */
-	cp.cte_type                = 0x00;
-	cp.switching_pattern_length = 0x00;
+	cp.cte_length              = DTM_CTE_LENGTH;
+	cp.cte_type                = DTM_CTE_TYPE;
+	cp.switching_pattern_length = 0x00; /* no antenna switching */
 	cp.tx_power_level          = tx_power;
 
 	buf = bt_hci_cmd_alloc(K_FOREVER);
@@ -402,10 +428,10 @@ int main(void)
 				// DTM TX is running - stop it, restart with new power level
 				LOG_INF("Stopping DTM TX to apply new TX power");
 				dtm_end(NULL);
-				LOG_INF("Restarting DTM TX: ch=%d, 1M PHY, 0xF0 pattern, %d bytes",
-					DTM_CHANNEL, DTM_DATA_LENGTH);
-				err = dtm_tx_start(DTM_CHANNEL, BT_HCI_LE_TX_PHY_1M,
-						   BT_HCI_TEST_PKT_PAYLOAD_11110000, DTM_DATA_LENGTH,
+				LOG_INF("Restarting DTM TX: ch=%d, PHY=%d, payload=0x%02x, %d bytes",
+					DTM_CHANNEL, DTM_PHY, DTM_PAYLOAD, DTM_DATA_LENGTH);
+				err = dtm_tx_start(DTM_CHANNEL, DTM_PHY,
+						   DTM_PAYLOAD, DTM_DATA_LENGTH,
 						   tx_power_levels[tx_power_index]);
 				if (err) {
 					LOG_ERR("Failed to restart DTM TX (err %d)", err);
@@ -421,10 +447,10 @@ int main(void)
 		if (dtm_status == 2) {
 			// Button 1 start/stop DTM TX
 			bt_le_adv_stop();
-			LOG_INF("Starting DTM TX: ch=%d, 1M PHY, 0xF0 pattern, %d bytes",
-				DTM_CHANNEL, DTM_DATA_LENGTH);
-			err = dtm_tx_start(DTM_CHANNEL, BT_HCI_LE_TX_PHY_1M,
-					   BT_HCI_TEST_PKT_PAYLOAD_11110000, DTM_DATA_LENGTH,
+			LOG_INF("Starting DTM TX: ch=%d, PHY=%d, payload=0x%02x, %d bytes",
+				DTM_CHANNEL, DTM_PHY, DTM_PAYLOAD, DTM_DATA_LENGTH);
+			err = dtm_tx_start(DTM_CHANNEL, DTM_PHY,
+					   DTM_PAYLOAD, DTM_DATA_LENGTH,
 					   tx_power_levels[tx_power_index]);
 			if (err) {
 				LOG_ERR("Failed to start DTM TX (err %d)", err);
@@ -439,8 +465,8 @@ int main(void)
 		if (dtm_status == 3) {
 			// Button 4 start/stop DTM RX
 			bt_le_adv_stop();
-			LOG_INF("Starting DTM RX: ch=%d, 1M PHY", DTM_CHANNEL);
-			err = dtm_rx_start(DTM_CHANNEL, BT_HCI_LE_RX_PHY_1M);
+			LOG_INF("Starting DTM RX: ch=%d, PHY=%d", DTM_CHANNEL, DTM_PHY);
+			err = dtm_rx_start(DTM_CHANNEL, DTM_PHY);
 			if (err) {
 				LOG_ERR("Failed to start DTM RX (err %d)", err);
 				dtm_status = 0;

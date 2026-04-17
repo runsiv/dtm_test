@@ -16,4 +16,51 @@ config DTM_DATA_LENGTH
 	help
 	  Number of payload bytes in each DTM test packet.
 
+config DTM_PHY
+	int "DTM physical layer"
+	range 1 4
+	default 1
+	help
+	  PHY passed to the LE Transmitter/Receiver Test HCI command.
+	  Matches BT_HCI_LE_TX_PHY_* in hci_types.h:
+	    1 = BT_HCI_LE_TX_PHY_1M       — 1 Mbps (default)
+	    2 = BT_HCI_LE_TX_PHY_2M       — 2 Mbps
+	    3 = BT_HCI_LE_TX_PHY_CODED_S8 — Coded S=8, 125 kbps (long range)
+	    4 = BT_HCI_LE_TX_PHY_CODED_S2 — Coded S=2, 500 kbps
+
+config DTM_PAYLOAD
+	int "DTM test packet payload pattern"
+	range 0 7
+	default 1
+	help
+	  Payload pattern passed to the LE Transmitter Test HCI command.
+	  Matches BT_HCI_TEST_PKT_PAYLOAD_* in hci_types.h:
+	    0 = BT_HCI_TEST_PKT_PAYLOAD_PRBS9     — pseudo-random 9-bit
+	    1 = BT_HCI_TEST_PKT_PAYLOAD_11110000  — alternating nibbles 0xF0 (default)
+	    2 = BT_HCI_TEST_PKT_PAYLOAD_10101010  — alternating bits 0xAA
+	    3 = BT_HCI_TEST_PKT_PAYLOAD_PRBS15    — pseudo-random 15-bit
+	    4 = BT_HCI_TEST_PKT_PAYLOAD_11111111  — all ones 0xFF
+	    5 = BT_HCI_TEST_PKT_PAYLOAD_00000000  — all zeros 0x00
+	    6 = BT_HCI_TEST_PKT_PAYLOAD_00001111  — inverse nibbles 0x0F
+	    7 = BT_HCI_TEST_PKT_PAYLOAD_01010101  — inverse alternating bits 0x55
+
+config DTM_CTE_LENGTH
+	int "CTE length (0 = disabled)"
+	range 0 20
+	default 0
+	help
+	  Constant Tone Extension length in 8 µs units.
+	  0 disables CTE. Valid values when enabled: 2–20.
+
+config DTM_CTE_TYPE
+	int "CTE type"
+	range 0 2
+	default 0
+	help
+	  CTE type passed to the LE Transmitter Test HCI command.
+	  Ignored when DTM_CTE_LENGTH = 0.
+	    0 = AoA — Angle of Arrival (no antenna switching)
+	    1 = AoD 1 µs slot — Angle of Departure
+	    2 = AoD 2 µs slot — Angle of Departure
+
 source "Kconfig.zephyr"
